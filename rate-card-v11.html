@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rate Card Configuration - v11</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Icons
+    const ChevronDown = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>;
+    const ChevronRight = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>;
+    const Plus = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+    const Copy = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>;
+    const Trash2 = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
+    const Calendar = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>;
+    const Info = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>;
+    const AlertCircle = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>;
+
+    function RateCardConcept() {
+      const [activeTab, setActiveTab] = useState('rates');
+      const [expandedScenario, setExpandedScenario] = useState('standard');
+      const [activeRateSection, setActiveRateSection] = useState('basic');
+      const [useMileageBands, setUseMileageBands] = useState(false);
+      const [noShowFeeType, setNoShowFeeType] = useState('flat');
+      const [memberCancelledFeeType, setMemberCancelledFeeType] = useState('percentage');
+      const [requestorCancelledFeeType, setRequestorCancelledFeeType] = useState('components');
+      
+      const scenarios = [
+        { id: 'standard', name: 'Standard Weekday', destination: null, dayType: 'weekdays', timeMode: 'specific', startTime: '09:00', endTime: '17:00', isDefault: true },
+      ];
+
+      const mileageBands = [
+        { start: 1, end: 3, rate: 15 },
+        { start: 4, end: 6, rate: 20 },
+        { start: 7, end: 10, rate: 25 },
+        { start: 11, end: null, rate: 35 },
+      ];
+
+      const usHolidays = [
+        { id: 'new-years', name: "New Year's Day", date: 'January 1' },
+        { id: 'mlk', name: 'Martin Luther King Jr. Day', date: '3rd Monday in January' },
+        { id: 'presidents', name: "Presidents' Day", date: '3rd Monday in February' },
+        { id: 'memorial', name: 'Memorial Day', date: 'Last Monday in May' },
+        { id: 'juneteenth', name: 'Juneteenth', date: 'June 19' },
+        { id: 'independence', name: 'Independence Day', date: 'July 4' },
+        { id: 'labor', name: 'Labor Day', date: '1st Monday in September' },
+        { id: 'columbus', name: 'Columbus Day', date: '2nd Monday in October' },
+        { id: 'veterans', name: 'Veterans Day', date: 'November 11' },
+        { id: 'thanksgiving', name: 'Thanksgiving', date: '4th Thursday in November' },
+        { id: 'christmas-eve', name: 'Christmas Eve', date: 'December 24' },
+        { id: 'christmas', name: 'Christmas Day', date: 'December 25' },
+        { id: 'new-years-eve', name: "New Year's Eve", date: 'December 31' },
+      ];
+
+      const changeLog = [
+        { date: 'Jan 15, 2025 3:42 PM', user: 'Jane Smith', field: 'Standard → Base Rate', oldValue: '$15.00', newValue: '$18.00' },
+        { date: 'Jan 15, 2025 3:42 PM', user: 'Jane Smith', field: 'Standard → Loaded Mileage Rate', oldValue: '$2.50/mi', newValue: '$2.75/mi' },
+        { date: 'Jan 10, 2025 11:15 AM', user: 'John Doe', field: 'Unloaded Miles → Charge For', oldValue: 'Both ways', newValue: 'To pickup only' },
+        { date: 'Jan 5, 2025 9:30 AM', user: 'Jane Smith', field: 'No-Show Fee → Amount', oldValue: '$35.00', newValue: '$40.00' },
+        { date: 'Dec 20, 2024 2:15 PM', user: 'John Doe', field: 'Holiday Rates → Holidays', oldValue: 'Thanksgiving, Christmas', newValue: 'Thanksgiving, Christmas, New Years Day' },
+      ];
+
+      const rateSections = [
+        { id: 'basic', label: 'Basic Rates' },
+        { id: 'unloaded', label: 'Unloaded Miles' },
+        { id: 'wait', label: 'Wait Time' },
+        { id: 'assistance', label: 'Assistance' },
+        { id: 'misc', label: 'Misc' },
+      ];
+
+      const getScenarioSummary = (scenario) => {
+        let parts = [];
+        if (scenario.destination) parts.push(`→ ${scenario.destination}`);
+        if (scenario.dayType === 'weekdays') parts.push('Weekdays');
+        else if (scenario.dayType === 'weekends') parts.push('Weekends');
+        else if (scenario.dayType === 'holidays') parts.push(`${scenario.selectedHolidays?.length || 0} holidays`);
+        else if (scenario.dayType === 'specific') parts.push('Specific dates');
+        
+        if (scenario.timeMode === 'specific') parts.push(`${scenario.startTime} – ${scenario.endTime}`);
+        else if (scenario.timeMode === 'complement') parts.push('All other hours');
+        else if (scenario.timeMode === 'all-day') parts.push('All day');
+        
+        return parts.join(' · ');
+      };
+
+      const CodeRateField = ({ label, codePlaceholder, ratePlaceholder, rateLabel, showFreeMiles, freeMilesHint, showMinimum, minLabel, minHint, hint }) => (
+        <div className="p-3 bg-white rounded border border-gray-200">
+          <span className="text-sm font-medium">{label}</span>
+          {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Code</label>
+              <input className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder={codePlaceholder} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">{rateLabel || 'Amount'}</label>
+              <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder={ratePlaceholder} />
+            </div>
+          </div>
+          {showFreeMiles && (
+            <div className="mt-2">
+              <label className="block text-xs text-gray-500 mb-1">Free Miles</label>
+              <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder={freeMilesHint || "0"} />
+            </div>
+          )}
+          {showMinimum && (
+            <div className="mt-2">
+              <label className="block text-xs text-gray-500 mb-1">{minLabel}</label>
+              <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder={minHint || "0"} />
+            </div>
+          )}
+          <button className="text-xs text-blue-600 mt-2 hover:text-blue-800">+ Add Modifiers</button>
+        </div>
+      );
+
+      const MileageBandsEditor = () => (
+        <div className="mt-3 p-3 bg-gray-100 rounded border border-gray-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-gray-700">Distance Bands</span>
+            <button className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add Band</button>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">Flat rate charged based on trip distance</p>
+          
+          {/* Code and Modifiers - Once for all bands */}
+          <div className="mb-3 pb-3 border-b border-gray-300">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Code (for all bands)</label>
+                <input className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder="A0130" />
+              </div>
+            </div>
+            <button className="text-xs text-blue-600 mt-2 hover:text-blue-800">+ Add Modifiers</button>
+          </div>
+
+          {/* Band Table */}
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-gray-500">
+                <th className="text-left py-1 font-medium">From (mi)</th>
+                <th className="text-left py-1 font-medium">To (mi)</th>
+                <th className="text-left py-1 font-medium">Flat Rate ($)</th>
+                <th className="w-6"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {mileageBands.map((band, i) => (
+                <tr key={i} className="border-t border-gray-200">
+                  <td className="py-1"><input type="number" className="w-14 border border-gray-300 rounded px-1 py-0.5 text-xs" defaultValue={band.start} /></td>
+                  <td className="py-1"><input type="number" className="w-14 border border-gray-300 rounded px-1 py-0.5 text-xs" defaultValue={band.end} placeholder="No limit" /></td>
+                  <td className="py-1"><input type="number" className="w-20 border border-gray-300 rounded px-1 py-0.5 text-xs" defaultValue={band.rate} /></td>
+                  <td className="py-1"><button className="text-gray-400 hover:text-red-600"><Trash2 size={12} /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+
+      const FeeField = ({ name, description, feeType, setFeeType, showWindow }) => (
+        <div className="p-4 border border-gray-200 rounded-lg">
+          <h3 className="font-medium text-sm mb-0.5">{name}</h3>
+          <p className="text-xs text-gray-400 mb-3">{description}</p>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-2">Calculation Type</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-1.5 text-sm">
+                  <input type="radio" name={`${name}-type`} checked={feeType === 'flat'} onChange={() => setFeeType('flat')} />
+                  Flat Amount
+                </label>
+                <label className="flex items-center gap-1.5 text-sm">
+                  <input type="radio" name={`${name}-type`} checked={feeType === 'percentage'} onChange={() => setFeeType('percentage')} />
+                  % of Total
+                </label>
+                <label className="flex items-center gap-1.5 text-sm">
+                  <input type="radio" name={`${name}-type`} checked={feeType === 'components'} onChange={() => setFeeType('components')} />
+                  Specific Components
+                </label>
+              </div>
+            </div>
+
+            {feeType === 'flat' && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Code</label>
+                  <input className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="A0426" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Amount ($)</label>
+                  <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="35.00" />
+                </div>
+              </div>
+            )}
+
+            {feeType === 'percentage' && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Code</label>
+                  <input className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="A0426" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Percentage of Total Trip (%)</label>
+                  <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="100" />
+                </div>
+              </div>
+            )}
+
+            {feeType === 'components' && (
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Code</label>
+                  <input className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="A0426" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">Include Components (100% of selected)</label>
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" defaultChecked /> Base</label>
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" defaultChecked /> Loaded Mileage</label>
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" /> Unloaded Miles</label>
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" /> Wait</label>
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" /> Assistance</label>
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" /> Misc</label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showWindow && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Applies When</label>
+                <select className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                  <option>Cancelled within 24 hours</option>
+                  <option>Cancelled within 48 hours</option>
+                  <option>Cancelled within 72 hours</option>
+                  <option>Cancelled at any time</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Based on trip date of service and scheduled pickup time</p>
+              </div>
+            )}
+
+            <button className="text-xs text-blue-600 hover:text-blue-800">+ Add Modifiers</button>
+          </div>
+        </div>
+      );
+
+      const ScenarioForm = ({ scenario }) => (
+        <div className="border-t border-gray-200 bg-gray-50 p-4">
+          {/* Scenario Name */}
+          <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Scenario Name</label>
+            <input 
+              type="text" 
+              className="w-full text-sm border border-gray-300 rounded px-3 py-2" 
+              defaultValue={scenario.name}
+              placeholder="e.g., Weekend Rates, Holiday Premium, Route to Albany"
+            />
+            <p className="text-xs text-gray-400 mt-1">Give this scenario a descriptive name to identify it easily</p>
+          </div>
+
+          {/* Conditions Section */}
+          <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
+            <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">When does this rate apply?</h3>
+            
+            {/* Destination */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Destination</label>
+              <select className="w-full text-sm border border-gray-300 rounded px-3 py-2" defaultValue={scenario.destination || ''}>
+                <option value="">Any destination in this region</option>
+                <optgroup label="Regions">
+                  <option value="Albany">Albany</option>
+                  <option value="Buffalo">Buffalo</option>
+                  <option value="Syracuse">Syracuse</option>
+                </optgroup>
+                <optgroup label="Specific Places">
+                  <option value="Memorial Hospital">Memorial Hospital</option>
+                  <option value="Downtown Dialysis">Downtown Dialysis</option>
+                </optgroup>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Select a specific destination for route-based pricing</p>
+            </div>
+            
+            {/* Day Type */}
+            <div className="grid grid-cols-4 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Days</label>
+                <select className="w-full text-sm border border-gray-300 rounded px-2 py-2" defaultValue={scenario.dayType}>
+                  <option value="weekdays">Weekdays</option>
+                  <option value="weekends">Weekends</option>
+                  <option value="holidays">Holidays</option>
+                  <option value="specific">Specific Dates</option>
+                </select>
+              </div>
+              
+              {/* Hours - Always Present */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hours</label>
+                <select className="w-full text-sm border border-gray-300 rounded px-2 py-2" defaultValue={scenario.timeMode}>
+                  <option value="specific">Set hours</option>
+                  <option value="complement">All other hours</option>
+                  <option value="all-day">24 hours</option>
+                </select>
+              </div>
+              
+              {scenario.timeMode === 'specific' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+                    <input type="time" className="w-full text-sm border border-gray-300 rounded px-2 py-2" defaultValue={scenario.startTime} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                    <input type="time" className="w-full text-sm border border-gray-300 rounded px-2 py-2" defaultValue={scenario.endTime} />
+                  </div>
+                </>
+              )}
+              
+              {scenario.timeMode === 'complement' && (
+                <div className="col-span-2 flex items-end">
+                  <div className="p-2 bg-blue-50 rounded text-xs text-blue-700 w-full">
+                    <Info size={12} className="inline mr-1" />
+                    Covers hours not defined in other scenarios
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Holiday Selection - Only show when Holidays day type */}
+            {scenario.dayType === 'holidays' && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select US Holidays</label>
+                <div className="border border-gray-300 rounded p-3 max-h-48 overflow-y-auto bg-white">
+                  <div className="space-y-2">
+                    {usHolidays.map(holiday => (
+                      <label key={holiday.id} className="flex items-start gap-2 text-sm hover:bg-gray-50 p-1 rounded">
+                        <input type="checkbox" className="mt-0.5" defaultChecked={scenario.selectedHolidays?.includes(holiday.id)} />
+                        <div className="flex-1">
+                          <div className="font-medium">{holiday.name}</div>
+                          <div className="text-xs text-gray-500">{holiday.date}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Dates are auto-calculated each year based on standard US holidays</p>
+              </div>
+            )}
+
+            {/* Specific Dates - Only show when Specific Dates day type */}
+            {scenario.dayType === 'specific' && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Custom Dates</label>
+                <button className="w-full text-sm border border-gray-300 rounded px-3 py-2 text-left flex items-center justify-between hover:bg-gray-50">
+                  <span>Dec 25, Jan 1, Jul 4, +2 more</span>
+                  <Calendar size={16} className="text-gray-400" />
+                </button>
+                <p className="text-xs text-gray-400 mt-1">Custom dates for special pricing not covered by standard holidays</p>
+              </div>
+            )}
+            
+            {/* Exclusion Dates - Only for Weekdays/Weekends */}
+            {(scenario.dayType === 'weekdays' || scenario.dayType === 'weekends') && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Exclude Dates (Optional)</label>
+                <button className="w-full text-sm border border-gray-300 rounded px-3 py-2 text-left text-gray-400 flex items-center justify-between hover:bg-gray-50">
+                  <span>None selected</span>
+                  <Calendar size={16} />
+                </button>
+                <p className="text-xs text-gray-400 mt-1">For edge cases only (e.g., company-specific closures not covered by standard holidays)</p>
+              </div>
+            )}
+          </div>
+
+          {/* Rates Section */}
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="flex border-b border-gray-200 overflow-x-auto">
+              {rateSections.map(section => (
+                <button
+                  key={section.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveRateSection(section.id); }}
+                  className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px ${
+                    activeRateSection === section.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {section.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-4">
+              {activeRateSection === 'basic' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <CodeRateField 
+                    label="Base Rate" 
+                    hint="Fixed charge per trip"
+                    codePlaceholder="A0130" 
+                    ratePlaceholder="15.00" 
+                    rateLabel="Amount ($)" 
+                  />
+                  
+                  <div className="p-3 bg-white rounded border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Loaded Mileage</span>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" checked={useMileageBands} onChange={(e) => setUseMileageBands(e.target.checked)} className="rounded" />
+                        Use distance bands
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">Charge for miles traveled with member in vehicle</p>
+                    
+                    {!useMileageBands ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Code</label>
+                            <input className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder="A0425" />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Per Mile ($)</label>
+                            <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder="2.50" />
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <label className="block text-xs text-gray-500 mb-1">Free Miles</label>
+                          <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder="0" />
+                        </div>
+                        <button className="text-xs text-blue-600 mt-2 hover:text-blue-800">+ Add Modifiers</button>
+                      </>
+                    ) : (
+                      <MileageBandsEditor />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeRateSection === 'unloaded' && (
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Charge For</label>
+                      <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                        <option value="both">Trip to pickup + return from dropoff</option>
+                        <option value="to-pickup">Trip to pickup only</option>
+                        <option value="from-dropoff">Return from dropoff only</option>
+                        <option value="none">No unloaded miles</option>
+                      </select>
+                      <p className="text-xs text-gray-400 mt-1">Miles traveled without member in vehicle</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Calculate</label>
+                      <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                        <option>Once per itinerary</option>
+                        <option>For each trip</option>
+                      </select>
+                      <p className="text-xs text-gray-400 mt-1">Per itinerary uses first pickup and last dropoff</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Measure From</label>
+                      <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                        <option>Nearest dispatch base</option>
+                        <option>Driver's location</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Miles</label>
+                      <input type="number" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="0" />
+                      <p className="text-xs text-gray-400 mt-1">Only charge after this distance</p>
+                    </div>
+                  </div>
+                  
+                  <CodeRateField 
+                    label="Unloaded Miles Rate" 
+                    hint="Charge for empty vehicle travel"
+                    codePlaceholder="A0425" 
+                    ratePlaceholder="1.50" 
+                    rateLabel="Per Mile ($)"
+                  />
+                </div>
+              )}
+
+              {activeRateSection === 'wait' && (
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Free Wait Time</label>
+                      <input type="number" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="15" />
+                      <p className="text-xs text-gray-400 mt-1">Minutes included before charges begin</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Wait</label>
+                      <input type="number" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="No limit" />
+                      <p className="text-xs text-gray-400 mt-1">Most minutes that can be billed</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Trip Distance</label>
+                      <input type="number" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="0" />
+                      <p className="text-xs text-gray-400 mt-1">Trip must exceed this to bill wait time</p>
+                    </div>
+                    
+                    <div className="p-2 bg-gray-50 rounded text-xs text-gray-500">
+                      <Info size={12} className="inline mr-1" />
+                      Billed in 30-minute increments
+                    </div>
+                  </div>
+                  
+                  <CodeRateField 
+                    label="Wait Time Rate" 
+                    hint="Charge while waiting at pickup/dropoff"
+                    codePlaceholder="A0420" 
+                    ratePlaceholder="15.00" 
+                    rateLabel="Per 30 Min ($)"
+                  />
+                </div>
+              )}
+
+              {activeRateSection === 'assistance' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <CodeRateField label="Assist (Hourly)" hint="Hourly assistance charge" codePlaceholder="S0209" ratePlaceholder="25.00" rateLabel="Per Hour ($)" />
+                  <CodeRateField label="Assist (Flat)" hint="One-time assistance fee" codePlaceholder="S0209" ratePlaceholder="15.00" rateLabel="Amount ($)" />
+                  <CodeRateField label="Adult Attendant (Flat)" hint="Fixed fee for adult attendant" codePlaceholder="S0209" ratePlaceholder="20.00" rateLabel="Amount ($)" />
+                  <CodeRateField label="Adult Attendant (Mileage)" hint="Per-mile attendant charge" codePlaceholder="S0209" ratePlaceholder="1.50" rateLabel="Per Mile ($)" showFreeMiles freeMilesHint="0" />
+                  <CodeRateField label="Child Attendant (Flat)" hint="Fixed fee for child attendant" codePlaceholder="S0209" ratePlaceholder="15.00" rateLabel="Amount ($)" />
+                </div>
+              )}
+
+              {activeRateSection === 'misc' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <CodeRateField label="Oxygen (Flat)" hint="One-time oxygen equipment fee" codePlaceholder="A0422" ratePlaceholder="10.00" rateLabel="Amount ($)" />
+                  <CodeRateField label="Oxygen (Mileage)" hint="Per-mile oxygen charge" codePlaceholder="A0422" ratePlaceholder="0.50" rateLabel="Per Mile ($)" showFreeMiles freeMilesHint="0" />
+                  <CodeRateField label="COVID+" hint="Additional charge for COVID precautions" codePlaceholder="A0998" ratePlaceholder="25.00" rateLabel="Amount ($)" />
+                  <CodeRateField label="Stairs (Flat)" hint="Fixed fee for stair assistance" codePlaceholder="T2049" ratePlaceholder="10.00" rateLabel="Amount ($)" showMinimum minLabel="Minimum Stairs" minHint="0" />
+                  <CodeRateField label="Stairs (Per Step)" hint="Charge per step climbed" codePlaceholder="T2049" ratePlaceholder="1.00" rateLabel="Per Step ($)" showMinimum minLabel="Minimum Stairs" minHint="0" />
+                  <div className="p-3 bg-white rounded border border-gray-200">
+                    <span className="text-sm font-medium">Discount</span>
+                    <p className="text-xs text-gray-400 mt-0.5">Reduce total by percentage</p>
+                    <div className="mt-2">
+                      <label className="block text-xs text-gray-500 mb-1">Percentage</label>
+                      <input type="number" className="w-full text-sm border border-gray-300 rounded px-2 py-1" placeholder="0" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="bg-gray-50 min-h-screen pb-20">
+          <div className="p-4">
+            {/* Header */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+              <div className="mb-4">
+                <h1 className="text-lg font-semibold text-gray-900">ABC Transport</h1>
+                <p className="text-sm text-gray-500">Rate Card Configuration</p>
+              </div>
+              
+              <div className="grid grid-cols-5 gap-4 p-3 bg-gray-50 rounded-lg text-sm">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Region</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-medium">
+                    <option>NYC Metro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Level of Service</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-medium">
+                    <option>Wheelchair Van</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                  <input type="date" className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" defaultValue="2024-01-01" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                  <input type="date" className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" defaultValue="2024-12-31" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Mile Range</label>
+                  <div className="flex gap-1 items-center">
+                    <input type="number" className="w-16 border border-gray-300 rounded px-2 py-1.5 text-sm" defaultValue="0" />
+                    <span className="text-gray-400">–</span>
+                    <input type="number" className="w-20 border border-gray-300 rounded px-2 py-1.5 text-sm" defaultValue="99999" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="border-b border-gray-200">
+                <div className="flex">
+                  <button
+                    onClick={() => setActiveTab('rates')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px ${
+                      activeTab === 'rates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Rate Scenarios
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('fees')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px ${
+                      activeTab === 'fees' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Fees
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('changelog')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px ${
+                      activeTab === 'changelog' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Change Log
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4">
+                {/* RATES TAB */}
+                {activeTab === 'rates' && (
+                  <div>
+                    {/* Matching Logic Guide */}
+                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex gap-3">
+                        <Info size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-900">
+                          <strong className="font-semibold text-base">Scenario Matching Priority</strong>
+                          <p className="mt-2">When a trip is created, the system finds the matching scenario using these priority rules:</p>
+                          <ol className="mt-2 space-y-1 ml-5 list-decimal">
+                            <li><strong>Holidays</strong> — Trips on selected US holidays match first (highest priority)</li>
+                            <li><strong>Specific Dates</strong> — Trips on custom dates match next</li>
+                            <li><strong>Weekdays/Weekends</strong> — All remaining days match automatically (minus holidays and specific dates)</li>
+                            <li><strong>Route vs Region</strong> — Within each category above, route rates (with destination) match before region rates</li>
+                          </ol>
+                          <p className="mt-3 text-blue-800"><strong>Note:</strong> You don't need to manually exclude holidays from weekdays—the system handles this automatically via priority matching. Exclusion dates are only for edge cases like company-specific closures.</p>
+                          <p className="mt-3 text-blue-900 font-medium"><strong>Important:</strong> Each trip matches exactly one scenario. If a trip results in cancellation or no-show, the fee replaces the entire trip rate (not added to it) based on the outcome rules in the Fees tab.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-xs text-gray-500">Create and manage your rate scenarios below. Name each scenario and configure its conditions and rates.</p>
+                      <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-1">
+                        <Plus size={14} /> Add Scenario
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {scenarios.map(scenario => (
+                        <div key={scenario.id} className="border border-gray-200 rounded-lg">
+                          <div 
+                            className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+                            onClick={() => setExpandedScenario(expandedScenario === scenario.id ? null : scenario.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              {expandedScenario === scenario.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{scenario.name}</span>
+                                  {scenario.isDefault && <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">Default</span>}
+                                  {scenario.destination && <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">Route</span>}
+                                  {scenario.timeMode === 'complement' && <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">Complement</span>}
+                                  {scenario.dayType === 'holidays' && <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded">Holidays</span>}
+                                </div>
+                                <span className="text-xs text-gray-500">{getScenarioSummary(scenario)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Duplicate"><Copy size={14} /></button>
+                              {!scenario.isDefault && <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete"><Trash2 size={14} /></button>}
+                            </div>
+                          </div>
+                          
+                          {expandedScenario === scenario.id && <ScenarioForm scenario={scenario} />}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* FEES TAB */}
+                {activeTab === 'fees' && (
+                  <div>
+                    <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-sm text-amber-900">
+                        <strong>Important:</strong> When a trip is cancelled or results in no-show, the configured fee <strong>replaces the entire trip rate</strong> (it does not add to the rate). The fee is calculated and billed instead of the standard scenario rates.
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-4">Configure fees for different trip outcomes below. Fees apply to individual trips based on their final status.</p>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                      <FeeField 
+                        name="No-Show" 
+                        description="Member was not present at pickup"
+                        feeType={noShowFeeType}
+                        setFeeType={setNoShowFeeType}
+                        showWindow={false}
+                      />
+                      <FeeField 
+                        name="Member Cancelled" 
+                        description="Trip cancelled by the member"
+                        feeType={memberCancelledFeeType}
+                        setFeeType={setMemberCancelledFeeType}
+                        showWindow={true}
+                      />
+                      <FeeField 
+                        name="Requestor Cancelled" 
+                        description="Trip cancelled by facility or requestor"
+                        feeType={requestorCancelledFeeType}
+                        setFeeType={setRequestorCancelledFeeType}
+                        showWindow={true}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* CHANGE LOG TAB */}
+                {activeTab === 'changelog' && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-4">History of all changes made to this rate card. Changes apply to trips created after the change date.</p>
+                    
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">Date & Time</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">Changed By</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">Field</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">Old Value</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">New Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {changeLog.map((log, i) => (
+                            <tr key={i} className="border-t border-gray-100">
+                              <td className="py-2 px-3 text-gray-500">{log.date}</td>
+                              <td className="py-2 px-3">{log.user}</td>
+                              <td className="py-2 px-3 font-medium">{log.field}</td>
+                              <td className="py-2 px-3 text-red-600">{log.oldValue}</td>
+                              <td className="py-2 px-3 text-green-600">{log.newValue}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed Footer */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-end gap-3">
+            <button className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">
+              Cancel
+            </button>
+            <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+              Save
+            </button>
+          </div>
+
+          <div className="mt-6 text-center text-xs text-gray-400">
+            Rate Card UX Concept v11 – Kinetik Health
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<RateCardConcept />, document.getElementById('root'));
+  </script>
+</body>
+</html>
